@@ -5,74 +5,59 @@
 
 using namespace std;
 
-int main() {
-    vector<string> grid;
+struct Tree {
+    char val;
+    bool visible;
+};
 
+int main() {
+    vector<vector<Tree>> grid;
+
+    vector<char> maxTop{};
     while (!cin.eof() && cin.peek() != -1) {
-        string s;
-        getline(cin, s);
-        if (!s.empty()) {
-            grid.emplace_back(move(s));
+        grid.emplace_back();
+
+        char maxLeft = numeric_limits<char>::min();
+        int i{};
+        while (cin.peek() != '\n') {
+            if (grid.size() == 1) {
+                maxTop.emplace_back(numeric_limits<char>::min());
+            }
+
+            char c = cin.get();
+            grid.back().push_back({c, c > maxLeft || c > maxTop[i]});
+
+            maxLeft = max(maxLeft, c);
+            maxTop[i] = max(maxTop[i], c);
+            ++i;
+        }
+        assert(cin.get() == '\n');
+    }
+
+    int visibleCount = 0;
+    vector<char> maxBottom(grid.size(), numeric_limits<char>::min());
+    for (auto it = grid.rbegin(); it != grid.rend(); ++it) {
+        char maxRight = numeric_limits<char>::min();
+        int i{};
+        for (auto jt = it->rbegin(); jt != it->rend(); ++jt) {
+            jt->visible = jt->visible || jt->val > maxRight || jt->val > maxBottom[i];
+            visibleCount += jt->visible;
+
+            maxRight = max(maxRight, jt->val);
+            maxBottom[i] = max(maxBottom[i], jt->val);
+            ++i;
         }
     }
 
-    int visCount = 0;
-
-    for (int i = 0; i < grid.size(); ++i) {
-        for (int j = 0; j < grid[i].size(); ++j) {
-
-            bool visible = false;
-
-            // Visible from top
-            bool hasHigherTop = false;
-            for (int k = 0; k < i; ++k) {
-                if (grid[k][j] >= grid[i][j]) {
-                    hasHigherTop = true;
-                    break;
-                }
-            }
-
-            // Visible from bottom
-            bool hasHigherBottom = false;
-            for (int k = grid.size() - 1; k > i; --k) {
-                if (grid[k][j] >= grid[i][j]) {
-                    hasHigherBottom = true;
-                    break;
-                }
-            }
-
-            // Visible from left
-            bool hasHigherLeft = false;
-            for (int k = 0; k < j; ++k) {
-                if (grid[i][k] >= grid[i][j]) {
-                    hasHigherLeft = true;
-                    break;
-                }
-            }
-
-            // Visible from right
-            bool hasHigherRight = false;
-            for (int k = grid[i].size() - 1; k > j; --k) {
-                if (grid[i][k] >= grid[i][j]) {
-                    hasHigherRight = true;
-                    break;
-                }
-            }
-
-            visible = !hasHigherTop || !hasHigherBottom || !hasHigherRight || !hasHigherLeft;
-            visCount += visible;
-
-            if (visible) {
-                cout << "/" << grid[i][j] << "\\ ";
-            } else {
-                cout << " " << grid[i][j] << "  ";
-            }
-
+    for (auto& row : grid) {
+        for (auto tree : row) {
+            if (tree.visible) cout << "/" << tree.val << "\\";
+            else cout << " " << tree.val << " ";
         }
         cout << endl;
     }
 
-    cout << visCount;
+    cout << visibleCount;
 
     return 0;
 }
