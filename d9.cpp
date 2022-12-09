@@ -7,17 +7,11 @@
 
 using namespace std;
 
-deque<char> lastHeadMoves{};
-const int tailSize = 1;
+const int tailSize = 9;
 
 void printField(const pair<int, int>& head, const vector<pair<int, int>>& tails) {
-    for (auto x : lastHeadMoves) {
-        cout << x;
-    }
-    cout << endl;
-
-    for (int i = -10; i <= 10; ++i) {
-        for (int j = -10; j <= 10; ++j) {
+    for (int i = -15; i <= 5; ++i) {
+        for (int j = -11; j <= 12; ++j) {
             if (head.first == i && head.second == j) {
                 cout << "H";
                 continue;
@@ -47,11 +41,17 @@ void printField(const pair<int, int>& head, const vector<pair<int, int>>& tails)
 pair<int, int> moveRope(pair<int, int>& head, const pair<int, int>& tail, const pair<int, int>& newHead) {
     pair<int, int> newTail = tail;
 
-
-    if (abs(newHead.first - tail.first) > 1 || abs(newHead.second - tail.second) > 1) {
-        newTail.first = head.first;
-        newTail.second = head.second;
+    const int firstDiff = newHead.first - tail.first;
+    const int secondDiff = newHead.second - tail.second;
+    if (abs(firstDiff) == 2 || abs(secondDiff) == 2) {
+        if (firstDiff != 0) {
+            newTail.first += firstDiff > 0 ? 1 : -1;
+        }
+        if (secondDiff != 0) {
+            newTail.second += secondDiff > 0 ? 1 : -1;
+        }
     }
+
     head.first = newHead.first;
     head.second = newHead.second;
 
@@ -63,7 +63,7 @@ int main() {
     pair<int, int> head{};
     set<pair<int, int>> uniquePos{head};
 
-    printField(head, tails);
+    // printField(head, tails);
 
     char c;
     int n;
@@ -74,7 +74,7 @@ int main() {
         assert(cin.get() == ' ');
         cin >> n;
 
-        cout << "== " << c << " " << n << "==" << endl;
+        // cout << "== " << c << " " << n << "==" << endl;
 
         for (int i = 0; i < n; ++i) {
             pair<int, int> newPartPos = head;
@@ -100,20 +100,15 @@ int main() {
             }
 
             pair<int, int>* partToUpdate = &head;
-            for (int i = 0; i < tails.size(); ++i) {
-                newPartPos = moveRope(*partToUpdate, tails[i], newPartPos);
-                uniquePos.insert(tails[i]);
-                partToUpdate = &tails[i];
+            for (auto & tail : tails) {
+                newPartPos = moveRope(*partToUpdate, tail, newPartPos);
+                partToUpdate = &tail;
             }
+            uniquePos.insert(newPartPos);
             partToUpdate->first = newPartPos.first;
             partToUpdate->second = newPartPos.second;
 
-            printField(head, tails);
-
-            lastHeadMoves.push_front(c);
-            if (lastHeadMoves.size() == 3) {
-                lastHeadMoves.pop_back();
-            }
+            // printField(head, tails);
         }
 
         c = cin.peek();
