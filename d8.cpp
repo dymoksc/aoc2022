@@ -1,63 +1,99 @@
 #include <iostream>
+#include <iomanip>
 #include <cassert>
 #include <vector>
 #include <limits>
 
 using namespace std;
 
-struct Tree {
-    char val;
-    bool visible;
-};
-
 int main() {
-    vector<vector<Tree>> grid;
+    vector<string> grid;
 
-    vector<char> maxTop{};
     while (!cin.eof() && cin.peek() != -1) {
-        grid.emplace_back();
+        string s;
+        getline(cin, s);
+        if (!s.empty()) {
+            grid.emplace_back(move(s));
+        }
+    }
 
-        char maxLeft = numeric_limits<char>::min();
-        int i{};
-        while (cin.peek() != '\n') {
-            if (grid.size() == 1) {
-                maxTop.emplace_back(numeric_limits<char>::min());
+    int visCount = 0;
+    int topScenic = 0;
+
+    for (int i = 0; i < grid.size(); ++i) {
+        for (int j = 0; j < grid[i].size(); ++j) {
+
+            bool visible = false;
+            int scenicScoreTop = 0;
+            int scenicScoreBottom = 0;
+            int scenicScoreLeft = 0;
+            int scenicScoreRight = 0;
+
+            // Visible from top
+            bool hasHigherTop = false;
+            scenicScoreTop = i;
+            for (int k = 0; k < i; ++k) {
+                if (grid[k][j] >= grid[i][j]) {
+                    hasHigherTop |= true;
+                    scenicScoreTop = i - k;
+                }
             }
 
-            char c = cin.get();
-            grid.back().push_back({c, c > maxLeft || c > maxTop[i]});
+            // Visible from bottom
+            bool hasHigherBottom = false;
+            scenicScoreBottom = grid.size() - 1 - i;
+            for (int k = grid.size() - 1; k > i; --k) {
+                if (grid[k][j] >= grid[i][j]) {
+                    hasHigherBottom |= true;
+                    scenicScoreBottom = k - i;
+                }
+            }
 
-            maxLeft = max(maxLeft, c);
-            maxTop[i] = max(maxTop[i], c);
-            ++i;
-        }
-        assert(cin.get() == '\n');
-    }
+            // Visible from left
+            bool hasHigherLeft = false;
+            scenicScoreLeft = j;
+            for (int k = 0; k < j; ++k) {
+                if (grid[i][k] >= grid[i][j]) {
+                    hasHigherLeft |= true;
+                    scenicScoreLeft = j - k;
+                }
+            }
 
-    int visibleCount = 0;
-    vector<char> maxBottom(grid.size(), numeric_limits<char>::min());
-    for (auto it = grid.rbegin(); it != grid.rend(); ++it) {
-        char maxRight = numeric_limits<char>::min();
-        int i{};
-        for (auto jt = it->rbegin(); jt != it->rend(); ++jt) {
-            jt->visible = jt->visible || jt->val > maxRight || jt->val > maxBottom[i];
-            visibleCount += jt->visible;
+            // Visible from right
+            bool hasHigherRight = false;
+            scenicScoreRight = grid[i].size() - 1 - j;
+            for (int k = grid[i].size() - 1; k > j; --k) {
+                if (grid[i][k] >= grid[i][j]) {
+                    hasHigherRight |= true;
+                    scenicScoreRight = k - j;
+                }
+            }
 
-            maxRight = max(maxRight, jt->val);
-            maxBottom[i] = max(maxBottom[i], jt->val);
-            ++i;
-        }
-    }
+            visible = !hasHigherTop || !hasHigherBottom || !hasHigherRight || !hasHigherLeft;
+            visCount += visible;
 
-    for (auto& row : grid) {
-        for (auto tree : row) {
-            if (tree.visible) cout << "/" << tree.val << "\\";
-            else cout << " " << tree.val << " ";
+            if (visible) {
+                cout << "/" << grid[i][j] << "\\ ";
+
+            } else {
+                cout << " " << grid[i][j] << "  ";
+            }
+
+            cout << "[";
+            cout << fixed << setfill('0');
+            cout << "T" << setw(2) << scenicScoreTop << ", ";
+            cout << "L" << setw(2) << scenicScoreLeft << ", ";
+            cout << "B" << setw(2) << scenicScoreBottom << ", ";
+            cout << "R" << setw(2) << scenicScoreRight << "]  ";
+
+            topScenic = max(topScenic, scenicScoreTop * scenicScoreLeft * scenicScoreBottom * scenicScoreRight);
+
         }
         cout << endl;
     }
 
-    cout << visibleCount;
+    cout << visCount << endl;
+    cout << topScenic << endl;
 
     return 0;
 }
