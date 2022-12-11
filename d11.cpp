@@ -1,14 +1,16 @@
+#include <numeric>
 #include <iostream>
 #include <algorithm>
 #include <deque>
 #include <string>
 #include <cassert>
 #include <vector>
+#include <array>
 
 using namespace std;
 
 struct Monkey {
-	deque<int> items{};
+	deque<long> items{};
 	char op{};
 	int operand{};
 	int divisor{};
@@ -77,7 +79,8 @@ struct Monkey {
 		in >> testFalseDir;
 	}
 
-	int execOp(int val) const {
+	template <typename T>
+	T execOp(T val) const {
 		switch (op) {
 		case '*':
 			return val * (operand == -1 ? val : operand);
@@ -89,22 +92,9 @@ struct Monkey {
 	}
 };
 
-ostream& operator<<(ostream& os, const Monkey& m) {
-	os << "Items: ";
-	for (auto x : m.items) {
-		os << x << ", ";
-	}
-	os << "\nOperation: new = old " << m.op << " " << m.operand << "\n";
-	os << "Divisor: " << m.divisor << endl;
-	os << "If true then " << m.testTrueDir << endl;
-	os << "If false then " << m.testFalseDir << endl;
-	return os;
-}
-
-
 int main() {
+	// Scanning monkey's characteristics
 	vector<Monkey> monkeys;
-
 	while (cin.peek() != -1) {
 		monkeys.emplace_back(cin);
 		assert(cin.get() == '\n');
@@ -113,59 +103,40 @@ int main() {
 		}
 	}
 
-	cout << monkeys.size() << endl;
+	// Set to 3 for part 1
+	int commonDivisable = accumulate(
+			monkeys.begin(),
+			monkeys.end(),
+			1,
+			[](int commonDiv, const Monkey& m) -> int {
+				return commonDiv * m.divisor;
+			});
 
-	for (int i = 0; i < monkeys.size(); ++i) {
-		cout << "Monkey #" << i << ": ";
-		for (auto item : monkeys[i].items) {
-			cout << item << ", ";
-		}
-		cout << endl;
-	}
-
-	for (int j = 0; j < 20; ++j) {
-		int i = 0;
+	array<int, 2> topInspections{0, 0};
+	for (int j = 0; j < 10000; ++j) {
 		for (Monkey& m : monkeys) {
 			while (!m.items.empty()) {
-				// cout << "Item " << m.items.front() << " ";
-				m.items.front() = m.execOp(m.items.front());
-				// cout << "-> " << m.items.front();
-				m.items.front() /= 3;
-				// cout << " -> " << m.items.front() << endl;
+				// Throwing item
+				m.items.front() = m.execOp(m.items.front()) % commonDivisable;
 				int targetMonkey = m.items.front() % m.divisor == 0 ?
 					m.testTrueDir :
 					m.testFalseDir;
-				// cout << "Monkey " << i << " throws " << m.items.front()
-				// 	 << " to " << targetMonkey << endl;
 				monkeys[targetMonkey].items.push_back(m.items.front());
 				m.items.pop_front();
+
+				// Keeping top inspections up to date
 				++m.inspections;
+				if (m.inspections > topInspections[0]) {
+					topInspections[1] = topInspections[0];
+					topInspections[0] = m.inspections;
+				} else if (m.inspections > topInspections[1]) {
+					topInspections[1] = m.inspections;
+				}
 			}
-			++i;
-		}
-
-		cout << "-------- Round " << j << " ------------" << endl;
-		for (int i = 0; i < monkeys.size(); ++i) {
-			cout << "Monkey #" << i << ": ";
-			for (auto item : monkeys[i].items) {
-				cout << item << ", ";
-			}
-			cout << endl;
 		}
 	}
 
-	sort(
-			monkeys.begin(),
-			monkeys.end(),
-			[](const Monkey& lhs, const Monkey& rhs) -> bool {
-				return lhs.inspections > rhs.inspections;
-			});
-
-	for (auto& m : monkeys) {
-		cout << m.inspections << endl;
-	}
-
-	cout << monkeys[0].inspections * monkeys[1].inspections << endl;
+	cout << long(topInspections[0]) * long(topInspections[1]) << endl;
 
 	return 0;
 }
