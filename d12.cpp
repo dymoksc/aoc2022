@@ -23,7 +23,7 @@ struct Node {
     }
 };
 
-size_t minPath = 0;
+size_t minPath = numeric_limits<size_t>::max();
 
 // void dfs(Node* node, int depth) {
 //     if (node->end) {
@@ -46,7 +46,7 @@ size_t minPath = 0;
 typedef vector<vector<Node>> Field;
 typedef pair<int, Node*> iPair;
 
-void shortestPath(Field& field, Node* src) {
+size_t shortestPath(Field& field, Node* src) {
     Node* end = nullptr;
 
     priority_queue<iPair, vector<iPair>, greater<>> pq;
@@ -79,19 +79,19 @@ void shortestPath(Field& field, Node* src) {
             }
         }
     }
+    //
+    // for (auto& row : field) {
+    //     for (Node& n : row) {
+    //         if (dist[&n] == numeric_limits<size_t>::max()) {
+    //             cout << n.c;
+    //         } else {
+    //             cout << ' ';
+    //         }
+    //     }
+    //     cout << "\n";
+    // }
 
-    for (auto& row : field) {
-        for (Node& n : row) {
-            if (dist[&n] == numeric_limits<size_t>::max()) {
-                cout << n.c;
-            } else {
-                cout << ' ';
-            }
-        }
-        cout << "\n";
-    }
-
-    minPath = dist[end];
+    return dist[end];
 }
 
 int main() {
@@ -144,10 +144,24 @@ int main() {
 
     cerr << "Running shortest path..." << endl;
     // Do DFS
-    // dfs(&field[start.first][start.second], 0);
-    shortestPath(field, &field[start.first][start.second]);
-    cout << minPath << endl;
+    for (auto& row : field) {
+        int i = 0;
+        for (Node& n : row) {
+            if (i++ > 2) {
+                break;
+            }
+            if (n.c != 'a') {
+                continue;
+            }
+
+            auto shortestP = shortestPath(field, &n);
+            // cout << shortestP << endl;
+            minPath = min(minPath, shortestP);
+        }
+    }
+
     assert(minPath <= field.size() * field.front().size());
+    cout << minPath << endl;
 
     return 0;
 }
