@@ -2,46 +2,101 @@
 #include <vector>
 #include <utility>
 #include <limits>
+#include <cassert>
+#include <numeric>
+#include <map>
+#include <queue>
+#include <algorithm>
 
 using namespace std;
 
 struct Node {
+    size_t id;
     char c{};
     vector<Node*> neighbours{};
     bool end = false;
     bool visited = false;
 
-    explicit Node(char c) : c(c) {}
+    explicit Node(char c) : c(c) {
+        static size_t idCounter = 0;
+        id = idCounter++;
+    }
 };
 
-int minPath = 1000;
+size_t minPath = 0;
 
-void dfs(Node* node, int depth) {
-    node->visited = true;
+// void dfs(Node* node, int depth) {
+//     if (node->end) {
+//         minPath = min(minPath, depth);
+//         cout << depth << endl;
+//         return;
+//     }
+//
+//     node->visited = true;
+//
+//     for (const auto& neighbour : node->neighbours) {
+//         if (!neighbour->visited) {
+//             dfs(neighbour, depth + 1);
+//         }
+//     }
+//
+//     node->visited = false;
+// }
 
-    if (depth == 16) {
-        int aa = 1;
+typedef vector<vector<Node>> Field;
+typedef pair<int, Node*> iPair;
+
+void shortestPath(Field& field, Node* src) {
+    Node* end = nullptr;
+
+    priority_queue<iPair, vector<iPair>, greater<>> pq;
+    map<Node*, size_t> dist;
+    for (auto& row : field) {
+        for (Node& n : row) {
+            if (n.end) {
+                end = &n;
+            }
+            dist[&n] = numeric_limits<size_t>::max();
+        }
     }
+    assert(end != nullptr);
 
-    if (node->end) {
-        minPath = min(minPath, depth);
-    }
-    cout << depth << endl;
+    pq.push(make_pair(0, src));
+    dist[src] = 0;
 
-    for (auto neighbour : node->neighbours) {
-        if (!neighbour->visited) {
-            // string prepad(depth, ' ');
-            // cout << prepad << "From " << node->c << " going to " << neighbour->c << " (" << depth << ")" << endl;
-            dfs(neighbour, depth + 1);
+    while (!pq.empty()) {
+        Node* u = pq.top().second;
+        pq.pop();
+
+        for (Node* v : u->neighbours) {
+            if (v == end) {
+                int d =42;
+            }
+
+            if (dist[v] > dist[u] + 1) {
+                dist[v] = dist[u] + 1;
+                pq.push(make_pair(dist[v], v));
+            }
         }
     }
 
-    node->visited = false;
+    for (auto& row : field) {
+        for (Node& n : row) {
+            if (dist[&n] == numeric_limits<size_t>::max()) {
+                cout << n.c;
+            } else {
+                cout << ' ';
+            }
+        }
+        cout << "\n";
+    }
+
+    minPath = dist[end];
 }
 
 int main() {
     pair<int, int> start;
-    vector<vector<Node>> field{{}};
+    Field field{{}};
 
     // Read to vector
     cerr << "Reading to vector..." << endl;
@@ -80,7 +135,7 @@ int main() {
                 }
 
                 // Checking height
-                if (abs(field[neighbour.first][neighbour.second].c - field[i][j].c) < 2) {
+                if (field[neighbour.first][neighbour.second].c - field[i][j].c < 2) {
                     field[i][j].neighbours.push_back(&field[neighbour.first][neighbour.second]);
                 }
             }
@@ -89,8 +144,10 @@ int main() {
 
     cerr << "Running shortest path..." << endl;
     // Do DFS
-    dfs(&field[start.first][start.second], 0);
+    // dfs(&field[start.first][start.second], 0);
+    shortestPath(field, &field[start.first][start.second]);
     cout << minPath << endl;
+    assert(minPath <= field.size() * field.front().size());
 
     return 0;
 }
