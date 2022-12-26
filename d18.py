@@ -1,3 +1,4 @@
+import fileinput
 from collections import namedtuple
 from pprint import pprint
 
@@ -26,11 +27,16 @@ class Plane:
 	def __eq__(self, other: 'Plane') -> bool:
 		return self.p1 == other.p1 and self.p2 == other.p2
 
+	def __hash__(self):
+		return hash(str(self.p1) + str(self.p2))
+
 
 class Cube:
 	planes = []  # list[Plane]
 
 	def __init__(self, p: Point):
+		self.planes = []
+		assert len(self.planes) == 0
 		for mod in range(-1, 1):
 			self.planes.append(Plane(
 				Point(p.x + mod, p.y - 1, p.z - 1),
@@ -44,12 +50,9 @@ class Cube:
 				Point(p.x - 1, p.y - 1, p.z + mod),
 				Point(p.x, p.y, p.z + mod),
 			))
+		assert len(self.planes) == 6
 
 cube = Cube(Point(1, 1, 1))
-assert len(cube.planes) == 6
-
-for plane in cube.planes:
-	print(plane.p1, plane.p2)
 
 # XY planes
 assert Plane(Point(0, 0, 0), Point(1, 1, 0)) in cube.planes
@@ -62,3 +65,14 @@ assert Plane(Point(0, 1, 0), Point(1, 1, 1)) in cube.planes
 # YZ planes
 assert Plane(Point(0, 0, 0), Point(0, 1, 1)) in cube.planes
 assert Plane(Point(1, 0, 0), Point(1, 1, 1)) in cube.planes
+
+planes_map = {}  # map[Plane, int]
+for line in fileinput.input():
+	cube = Cube(Point(*[int(i) for i in line.rstrip().split(',')]))
+	for p in cube.planes:
+		if p in planes_map:
+			planes_map[p] += 1
+		else:
+			planes_map[p] = 1
+
+print(len([v for v in planes_map.values() if v == 1]))
