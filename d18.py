@@ -67,12 +67,78 @@ assert Plane(Point(0, 0, 0), Point(0, 1, 1)) in cube.planes
 assert Plane(Point(1, 0, 0), Point(1, 1, 1)) in cube.planes
 
 planes_map = {}  # map[Plane, int]
+
+# Max values + 1
+mx = 20
+my = 20
+mz = 20
+# mx = 4
+# my = 4
+# mz = 7
+area = [[[[0, 0] for z in range(mz + 1)] for y in range(my + 1)] for z in range(mz + 1)]  # list[list[list[bool]]]
 for line in fileinput.input():
-	cube = Cube(Point(*[int(i) for i in line.rstrip().split(',')]))
+	point = Point(*[int(i) for i in line.rstrip().split(',')])
+	area[point.x][point.y][point.z][0] = 1
+
+	cube = Cube(point)
 	for p in cube.planes:
 		if p in planes_map:
 			planes_map[p] += 1
 		else:
 			planes_map[p] = 1
+
+def dfs(p: Point):
+	area[p.x][p.y][p.z][1] = 1
+	for x in range(max(0, p.x - 1), min(mx + 1, p.x + 2)):
+		if area[x][p.y][p.z] == [0, 0]:
+			dfs(Point(x, p.y, p.z))
+	for y in range(max(0, p.y - 1), min(my + 1, p.y + 2)):
+		if area[p.x][y][p.z] == [0, 0]:
+			dfs(Point(p.x, y, p.z))
+	for z in range(max(0, p.z - 1), min(mz + 1, p.z + 2)):
+		if area[p.x][p.y][z] == [0, 0]:
+			dfs(Point(p.x, p.y, z))
+
+def bfs(p: Point):
+	q = []
+	area[p.x][p.y][p.z][1] = 1
+	q.append(p)
+	while len(q) != 0:
+		v = q.pop()
+		adjacent = []
+		if v.x > 0: adjacent.append(Point(v.x - 1, v.y, v.z))
+		if v.x < mx: adjacent.append(Point(v.x + 1, v.y, v.z))
+		if v.y > 0: adjacent.append(Point(v.x, v.y - 1, v.z))
+		if v.y < my: adjacent.append(Point(v.x, v.y + 1, v.z))
+		if v.z > 0: adjacent.append(Point(v.x, v.y, v.z - 1))
+		if v.z < mz: adjacent.append(Point(v.x, v.y, v.z + 1))
+		
+		for w in adjacent:
+			if area[w.x][w.y][w.z] == [0, 0]:
+				area[w.x][w.y][w.z][1] = 1
+				q.append(w)
+
+bfs(Point(0, 0, 0))
+
+for x in range(mx + 1):
+	for y in range(my + 1):
+		for z in range(mz + 1):
+			if area[x][y][z][0] == 1:
+				print('*', end=' ')
+			elif area[x][y][z][0] == 0:
+				print('_' if area[x][y][z][1] == 1 else 'O', end=' ')
+		print()
+	for z in range(mz + 1):
+		print('=', end='=')
+	print()
+
+for x in range(mx):
+	for y in range(my):
+		for z in range(mz):
+			if area[x][y][z] == [0, 0]:
+				empty_cube = Cube(Point(x, y, z))
+				for plane in empty_cube.planes:
+					if plane in planes_map:
+						planes_map[plane] -= 1
 
 print(len([v for v in planes_map.values() if v == 1]))
